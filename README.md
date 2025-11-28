@@ -69,7 +69,7 @@ winget install -e --id zig.zig
 ### Core & UI
 | Key | Mode | Action |
 | :--- | :--- | :--- |
-| `-t` | Normal | **Toggle NERDTree** (Open/Close file explorer) |
+| `-e` | Normal | **Switch between Neo Tree and the editor** |
 | `-h` | Normal | **Clear Highlights** (Removes search highlighting) |
 | `-r` | Normal | **Toggle Relative Numbers** (Switches relative/absolute) |
 | `-n` | Normal | **Enable Line Numbers** (`set number`) |
