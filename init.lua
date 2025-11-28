@@ -1,3 +1,4 @@
+-- 1. Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -7,6 +8,7 @@ if not vim.loop.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- 2. Core Settings
 vim.g.mapleader = "-"
 vim.g.maplocalleader = "-"
 
@@ -17,6 +19,7 @@ vim.opt.scrolloff = 999
 vim.opt.timeoutlen = 500
 vim.opt.termguicolors = true
 
+-- Native Highlight Yank
 vim.api.nvim_create_autocmd("TextYankPost", {
   group = vim.api.nvim_create_augroup("HighlightYank", { clear = true }),
   callback = function()
@@ -24,40 +27,48 @@ vim.api.nvim_create_autocmd("TextYankPost", {
   end,
 })
 
+-- 3. Plugins
 require("lazy").setup({
 
+  -- Git Management (LazyGit)
+  {
+    "kdheepak/lazygit.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = function()
+      vim.g.lazygit_floating_window_winblend = 0
+      vim.g.lazygit_floating_window_scaling_factor = 0.9
+      vim.g.lazygit_use_neovim_remote = 1
+    end,
+  },
+
+  -- Terminal Toggle
   {
     'akinsho/toggleterm.nvim',
     version = "*",
     config = function()
       require("toggleterm").setup({
         size = 20,
-        -- Multiple keys to open it, just in case C-\ fails
-        open_mapping = [[<c-\>]], 
+        open_mapping = [[<c-\>]],
         hide_numbers = true,
         shade_terminals = true,
         start_in_insert = true,
-        insert_mappings = true, -- Whether or not the open mapping applies in insert mode
-        terminal_mappings = true, -- Whether or not the open mapping applies in the opened terminals
+        insert_mappings = true,
+        terminal_mappings = true,
         persist_size = true,
         direction = 'float',
-        close_on_exit = true, -- Close the terminal window when the process exits
-        
-        -- Do not use 'powershell.exe' in the generic shell option if global opts are set.
-        -- Instead, use the 'shell' parameter inside the setup specifically for this buffer.
+        close_on_exit = true,
         shell = 'powershell.exe -NoLogo -ExecutionPolicy Bypass',
-        
         float_opts = {
           border = 'curved',
           winblend = 0,
         }
       })
-      
-      -- Backup Keymap: F7 to toggle (Easier to hit)
+      -- Backup Keymap: F7
       vim.keymap.set('n', '<F7>', '<cmd>ToggleTerm<cr>', { noremap = true, silent = true })
       vim.keymap.set('t', '<F7>', '<cmd>ToggleTerm<cr>', { noremap = true, silent = true })
     end
   },
+
   -- Theme
   { 
     "ellisonleao/gruvbox.nvim", 
@@ -72,16 +83,11 @@ require("lazy").setup({
   {
     "preservim/nerdtree",
     dependencies = { "ryanoasis/vim-devicons" },
-    config = function()
-      vim.g.NERDTreeWinPos = "right"
-    end,
+    config = function() vim.g.NERDTreeWinPos = "right" end,
   },
 
   -- Status Line
-  { 
-    "vim-airline/vim-airline",
-    dependencies = { "vim-airline/vim-airline-themes" },
-  },
+  { "vim-airline/vim-airline", dependencies = { "vim-airline/vim-airline-themes" } },
 
   -- Formatting & Linting
   { 
@@ -104,6 +110,9 @@ require("lazy").setup({
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
     config = function()
+      -- FIX: Force Zig compiler to stop recompile loops on Windows
+      require("nvim-treesitter.install").compilers = { "zig" }
+
       require("nvim-treesitter.configs").setup({
         ensure_installed = { "powershell", "lua", "python", "c_sharp", "go", "markdown", "markdown_inline", "json" },
         sync_install = false,
@@ -113,7 +122,7 @@ require("lazy").setup({
     end,
   },
 
-  -- LSP & Mason
+  -- LSP & Mason (The section you asked about)
   {
     "williamboman/mason.nvim",
     dependencies = {
@@ -121,7 +130,10 @@ require("lazy").setup({
       "neovim/nvim-lspconfig",
     },
     config = function()
+      -- 1. Setup Mason (The installer)
       require("mason").setup()
+      
+      -- 2. Ensure servers are installed
       require("mason-lspconfig").setup({
         ensure_installed = { 
           "powershell_es", 
@@ -130,6 +142,7 @@ require("lazy").setup({
         },
       })
       
+      -- 3. Configure the servers (LSP Logic goes here)
       local lspconfig = require("lspconfig")
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
       
@@ -187,7 +200,6 @@ require("lazy").setup({
     end
   },
 
-  
   -- Copilot Core (Ghost Text / Inline Suggestions)
   {
     "zbirenbaum/copilot.lua",
@@ -195,12 +207,12 @@ require("lazy").setup({
     event = "InsertEnter",
     config = function()
       require("copilot").setup({
-      copilot_node_command = [[C:\Program Files\nodejs\node.exe]],
+        copilot_node_command = [[C:\Program Files\nodejs\node.exe]], -- Hardcoded Node Path
         suggestion = { 
           enabled = true,
           auto_trigger = true,
           keymap = {
-            accept = "<M-l>", -- Alt+l to accept suggestion
+            accept = "<M-l>",
             accept_word = false,
             accept_line = false,
             next = "<M-]>",
@@ -213,20 +225,20 @@ require("lazy").setup({
     end,
   },
 
+  -- Copilot Chat
   {
     "CopilotC-Nvim/CopilotChat.nvim",
-    branch = "Main",
+    branch = "canary", -- Fixed branch name (Main -> canary)
     dependencies = {
       { "zbirenbaum/copilot.lua" },
       { "nvim-lua/plenary.nvim" }, 
     },
     opts = {
       debug = false,
-      -- Default window options
       window = {
-        layout = 'float', -- 'vertical', 'horizontal', 'float'
-        width = 0.6,      -- fractional width of parent
-        height = 0.6,     -- fractional height of parent
+        layout = 'float',
+        width = 0.6,
+        height = 0.6,
       },
     },
     keys = {
@@ -239,14 +251,17 @@ require("lazy").setup({
 
 })
 
+-- 6. Keymaps
 vim.keymap.set("i", "jj", "<Esc>", { noremap = true })
-
 vim.keymap.set("n", "<leader>h", ":noh<CR>")
 vim.keymap.set("n", "<leader>t", ":NERDTreeToggle<CR>")
 vim.keymap.set("n", "<leader>n", ":set number<CR>")
 vim.keymap.set("n", "<leader>nn", ":set nonumber<CR>")
 vim.keymap.set("n", "<leader>mm", ":set mouse=<CR>")
 vim.keymap.set("n", "<leader>m", ":set mouse=a<CR>")
+
+-- Open LazyGit
+vim.keymap.set("n", "<leader>gg", ":LazyGit<CR>", { noremap = true, silent = true, desc = "Open LazyGit" })
 
 -- Line Numbers Toggle
 vim.keymap.set("n", "<leader>r", function()
@@ -263,6 +278,7 @@ end)
 vim.keymap.set("n", "gd", vim.lsp.buf.definition, { desc = "Go to Definition" })
 vim.keymap.set("n", "K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
 
+-- 7. Autocommands
 local augroup = vim.api.nvim_create_augroup
 local autocmd = vim.api.nvim_create_autocmd
 local nerd_group = augroup("NERDTreeGroup", { clear = true })
