@@ -79,11 +79,31 @@ require("lazy").setup({
     end
   },
 
-  -- File Explorer
+  -- Neo-tree
   {
-    "preservim/nerdtree",
-    dependencies = { "ryanoasis/vim-devicons" },
-    config = function() vim.g.NERDTreeWinPos = "right" end,
+    "nvim-neo-tree/neo-tree.nvim",
+    branch = "v3.x",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-tree/nvim-web-devicons", 
+      "MunifTanjim/nui.nvim",
+    },
+    config = function()
+        require("neo-tree").setup({
+            close_if_last_window = true,
+            filesystem = {
+                hijack_netrw_behavior = "open_default",
+                follow_current_file = {
+                    enabled = true,
+                },
+                use_libuv_file_watcher = true,
+            },
+            window = {
+                position = "right",
+                width = 30,
+            }
+        })
+    end
   },
 
   -- Status Line
@@ -102,7 +122,7 @@ require("lazy").setup({
 
   -- Utilities
   { "jiangmiao/auto-pairs" },
-  { "preservim/nerdcommenter" },
+  { "preservim/nerdcommenter" }, 
   { "pearofducks/ansible-vim" },
 
   -- Treesitter
@@ -110,7 +130,6 @@ require("lazy").setup({
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
     config = function()
-      -- FIX: Force Zig compiler to stop recompile loops on Windows
       require("nvim-treesitter.install").compilers = { "zig" }
 
       require("nvim-treesitter.configs").setup({
@@ -122,7 +141,7 @@ require("lazy").setup({
     end,
   },
 
-  -- LSP & Mason (The section you asked about)
+  -- LSP & Mason 
   {
     "williamboman/mason.nvim",
     dependencies = {
@@ -130,7 +149,7 @@ require("lazy").setup({
       "neovim/nvim-lspconfig",
     },
     config = function()
-      -- 1. Setup Mason (The installer)
+      -- 1. Setup Mason
       require("mason").setup()
       
       -- 2. Ensure servers are installed
@@ -138,11 +157,11 @@ require("lazy").setup({
         ensure_installed = { 
           "powershell_es", 
           "lua_ls",        
-          "omnisharp",     
+          "omnisharp",       
         },
       })
       
-      -- 3. Configure the servers (LSP Logic goes here)
+      -- 3. Configure the servers 
       local lspconfig = require("lspconfig")
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
       
@@ -200,14 +219,14 @@ require("lazy").setup({
     end
   },
 
-  -- Copilot Core (Ghost Text / Inline Suggestions)
+  -- Copilot Core
   {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
     event = "InsertEnter",
     config = function()
       require("copilot").setup({
-        copilot_node_command = [[C:\Program Files\nodejs\node.exe]], -- Hardcoded Node Path
+        copilot_node_command = [[C:\Program Files\nodejs\node.exe]], 
         suggestion = { 
           enabled = true,
           auto_trigger = true,
@@ -228,7 +247,7 @@ require("lazy").setup({
   -- Copilot Chat
   {
     "CopilotC-Nvim/CopilotChat.nvim",
-    branch = "canary", -- Fixed branch name (Main -> canary)
+    branch = "canary", 
     dependencies = {
       { "zbirenbaum/copilot.lua" },
       { "nvim-lua/plenary.nvim" }, 
@@ -254,14 +273,24 @@ require("lazy").setup({
 -- 6. Keymaps
 vim.keymap.set("i", "jj", "<Esc>", { noremap = true })
 vim.keymap.set("n", "<leader>h", ":noh<CR>")
-vim.keymap.set("n", "<leader>t", ":NERDTreeToggle<CR>")
 vim.keymap.set("n", "<leader>n", ":set number<CR>")
 vim.keymap.set("n", "<leader>nn", ":set nonumber<CR>")
 vim.keymap.set("n", "<leader>mm", ":set mouse=<CR>")
 vim.keymap.set("n", "<leader>m", ":set mouse=a<CR>")
-
--- Open LazyGit
 vim.keymap.set("n", "<leader>gg", ":LazyGit<CR>", { noremap = true, silent = true, desc = "Open LazyGit" })
+
+-- Neo-tree Keymaps
+-- Toggle focus between Neo-tree and last window
+vim.keymap.set('n', '<leader>e', function()
+  if vim.bo.filetype == "neo-tree" then
+    vim.cmd.wincmd "p"
+  else
+    vim.cmd "Neotree focus"
+  end
+end, { silent = true })
+
+-- Toggle Open/Close
+vim.keymap.set('n', '<C-n>', ':Neotree toggle<CR>', { silent = true })
 
 -- Line Numbers Toggle
 vim.keymap.set("n", "<leader>r", function()
@@ -279,36 +308,11 @@ vim.keymap.set("n", "gd", vim.lsp.buf.definition, { desc = "Go to Definition" })
 vim.keymap.set("n", "K", vim.lsp.buf.hover, { desc = "Hover Documentation" })
 
 -- 7. Autocommands
-local augroup = vim.api.nvim_create_augroup
-local autocmd = vim.api.nvim_create_autocmd
-local nerd_group = augroup("NERDTreeGroup", { clear = true })
 
-autocmd("VimEnter", {
-  group = nerd_group,
+-- Open Neo-tree by default
+vim.api.nvim_create_autocmd("VimEnter", {
   callback = function()
-    local args = vim.fn.argv()
-    if #args == 1 and vim.fn.isdirectory(args[1]) == 1 then
-      vim.cmd("NERDTree")
-      vim.cmd("wincmd p")
-    else
-      vim.cmd("NERDTree")
-      vim.cmd("wincmd p")
-    end
-  end,
-})
-
-autocmd("BufEnter", {
-  group = nerd_group,
-  pattern = "NERD_tree_*",
-  command = "execute 'normal R'",
-})
-
-autocmd("BufEnter", {
-  group = nerd_group,
-  callback = function()
-    if vim.fn.winnr("$") == 1 and vim.b.NERDTree and vim.b.NERDTree.isTabTree then
-      vim.cmd("quit")
-    end
+    vim.cmd("Neotree show")
   end,
 })
 
