@@ -157,31 +157,32 @@ require("lazy").setup({
         ensure_installed = { 
           "powershell_es", 
           "lua_ls",        
-          "omnisharp",       
+          "omnisharp",        
         },
       })
       
-      -- 3. Configure the servers 
-      local lspconfig = require("lspconfig")
+      -- 3. Configure the servers (UPDATED FOR NEIOVIM 0.11 DEPRECATION)
       local capabilities = require('cmp_nvim_lsp').default_capabilities()
       
       -- PowerShell
-      lspconfig.powershell_es.setup({
+      vim.lsp.config.powershell_es = {
         bundle_path = vim.fn.stdpath("data") .. "/mason/packages/powershell-editor-services",
         settings = { powershell = { codeFormatting = { preset = "OTBS" } } },
         capabilities = capabilities,
-      })
+      }
+      vim.lsp.enable("powershell_es")
 
       -- C# (Omnisharp)
-      lspconfig.omnisharp.setup({
+      vim.lsp.config.omnisharp = {
         capabilities = capabilities,
         cmd = { vim.fn.stdpath("data") .. "/mason/bin/omnisharp" },
         enable_roslyn_analyzers = true,
         organize_imports_on_format = true,
-      })
+      }
+      vim.lsp.enable("omnisharp")
 
       -- Lua
-      lspconfig.lua_ls.setup({
+      vim.lsp.config.lua_ls = {
         capabilities = capabilities,
         settings = {
           Lua = {
@@ -190,7 +191,8 @@ require("lazy").setup({
             telemetry = { enable = false },
           },
         },
-      })
+      }
+      vim.lsp.enable("lua_ls")
     end
   },
 
